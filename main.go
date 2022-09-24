@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"sort"
 	"strings"
 	"sync"
 )
@@ -16,6 +17,16 @@ var (
 	EaterFoodMap = make(map[string][]string)
 	readFile     *os.File
 )
+
+type Sort struct {
+	Key   string
+	Value int
+}
+type SortList []Sort
+
+func (p SortList) Len() int           { return len(p) }
+func (p SortList) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
+func (p SortList) Less(i, j int) bool { return p[i].Value > p[j].Value }
 
 // Will check if we have any duplicate eater_id and food_id, input from the log file
 func FoundDuplicate(fs *bufio.Scanner) {
@@ -77,5 +88,26 @@ func main() {
 	FoundDuplicate(getFileScanner(LogFile))
 	go CountFoodItem(wg, getFileScanner(LogFile))
 	wg.Wait()
-	fmt.Println(CountMap)
+	fmt.Println("Top Food items: ")
+	//sort the CountMap and display the top 3 for <3 show all
+	CountSlice := make(SortList, len(CountMap))
+	i := 0
+	for k, v := range CountMap {
+		CountSlice[i] = Sort{k, v}
+		i++
+	}
+	sort.Sort(CountSlice)
+
+	if len(CountSlice) > 0 && len(CountSlice) < 3 {
+		for i, v := range CountSlice {
+			fmt.Printf("%v %v\n", i+1, v.Key)
+		}
+	} else {
+		for i, v := range CountSlice {
+			if i > 2 {
+				break
+			}
+			fmt.Printf("%v %v\n", i+1, v.Key)
+		}
+	}
 }
